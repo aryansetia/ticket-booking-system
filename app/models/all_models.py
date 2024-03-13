@@ -1,4 +1,6 @@
 from app import db
+from sqlalchemy.schema import UniqueConstraint
+
 
 class Train(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,13 +15,18 @@ class Train(db.Model):
 
     def __repr__(self):
         return f"Train(train_number={self.train_number}, departure_time={self.departure_time}, capacity={self.capacity})"
+    
 
 class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     train_id = db.Column(db.Integer, db.ForeignKey('train.id'), nullable=False)
     passenger_name = db.Column(db.String(100), nullable=False)
     passenger_email = db.Column(db.String(100), nullable=False)
-    seat_number = db.Column(db.Integer, nullable=True, unique=True)
+    seat_number = db.Column(db.Integer, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('train_id', 'seat_number', name='unique_train_seat'),
+    )
 
     def __repr__(self):
         return f"Ticket(passenger_name={self.passenger_name}, passenger_email={self.passenger_email}, seat_number={self.seat_number})"

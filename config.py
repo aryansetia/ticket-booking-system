@@ -11,6 +11,12 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite3')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAIL_SERVER = 'smtp.fastmail.com'
+    MAIL_PORT =  465
+    MAIL_USERNAME = 'ticket_booking@fastmail.com'
+    MAIL_PASSWORD =  '6jhcgxpy8gqzd6zr'
+    MAIL_USE_TLS = False 
+    MAIL_USE_SSL = True 
 
 
 class TestingConfig(Config):

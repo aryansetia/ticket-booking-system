@@ -4,6 +4,8 @@ from app.models.all_models import Train, Ticket
 from app import db 
 from datetime import datetime, timedelta
 import pytz
+from app import mail
+from flask_mailman import EmailMessage
 
 main_api = Blueprint('main_api', __name__)
 
@@ -111,6 +113,14 @@ def book_ticket():
     ticket = Ticket(train_id=train.id, passenger_name=passenger_name, passenger_email=passenger_email, seat_number=seat_number)
     db.session.add(ticket)
     db.session.commit()
+    
+    msg = EmailMessage(
+        "Your ticket details",
+        f"Hi, {passenger_name}, your ticket has been booked successfully!",
+        "ticket_booking@fastmail.com", 
+        [passenger_email]
+    )
+    msg.send()
 
     return jsonify({'message': 'Ticket booked successfully'}), 201
 
@@ -196,8 +206,6 @@ def is_tatkal_booking_window_open(departure_time):
     tatkal_booking_start_time = departure_time - timedelta(hours=2)
     # Determine the Tatkal booking window end time (10 minutes after the start time)
     tatkal_booking_end_time = tatkal_booking_start_time + timedelta(minutes=10)
-    # Get the current time
     current_time = datetime.now()
 
-    # Check if the current time is within the Tatkal booking window
     return tatkal_booking_start_time <= current_time <= tatkal_booking_end_time

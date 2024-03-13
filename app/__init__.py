@@ -4,20 +4,39 @@ import os
 from flask_migrate import Migrate
 from config import config_by_name
 from werkzeug.security import generate_password_hash  
+from celery import Celery, Task
+from flask_mailman import Mail
 
 db = SQLAlchemy()
+
+mail = Mail()
+
+def celery_init_app(app):
+    class FlaskTask(Task):
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery_app = Celery(app.name, task_cls=FlaskTask)
+    celery_app.config_from_object(app.config["CELERY"])
+    celery_app.set_default()
+    app.extensions["celery"] = celery_app
+    return celery_app
+
 
 def create_app():
     app = Flask(__name__)
 
     config_name = os.getenv('FLASK_CONFIG') or 'dev'
 
-    print(os.getenv('FLASK_CONFIG'))
     # Load configuration from a configuration file
     app.config.from_object(config_by_name[config_name])
 
     # Initialize the database with the Flask app
     db.init_app(app)
+
+    # Initialize mail with the Flask app 
+    mail.init_app(app)
 
     # Initialize migrate command
     migrate = Migrate(app, db)
@@ -28,11 +47,20 @@ def create_app():
     app.register_blueprint(login_api)
     app.register_blueprint(main_api)
 
+    # Celery configuration
+    app.config.from_mapping(
+        CELERY=dict(
+            broker_url="redis://localhost",
+            result_backend="redis://localhost",
+            task_ignore_result=True,
+        ),
+    )
+    app.config.from_prefixed_env()
+    celery_init_app(app)
+
     # Importing database models from models.py
     from app.models.admin import Admin
-    # from app.models.transactions import Transaction
-
-    # Custom CLI command to create an admin user
+    from app.models.all_models import Ticket, Train
 
     # Create the database (if it doesn't exist)
     with app.app_context():
