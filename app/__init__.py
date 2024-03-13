@@ -3,15 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from flask_migrate import Migrate
 from config import config_by_name
-from werkzeug.security import generate_password_hash  
 from celery import Celery, Task
 from flask_mailman import Mail
 
 db = SQLAlchemy()
-
 mail = Mail()
 
-def celery_init_app(app):
+def celery_init_app(app: Flask) -> Celery:
     class FlaskTask(Task):
         def __call__(self, *args: object, **kwargs: object) -> object:
             with app.app_context():
@@ -41,13 +39,7 @@ def create_app():
     # Initialize migrate command
     migrate = Migrate(app, db)
 
-    # Register the blueprints for your API routes
-    from app.controllers.login_controller import login_api
-    from app.controllers.main_controller import main_api
-    app.register_blueprint(login_api)
-    app.register_blueprint(main_api)
-
-    # Celery configuration
+    # Celery configuration 
     app.config.from_mapping(
         CELERY=dict(
             broker_url="redis://localhost",
@@ -58,6 +50,12 @@ def create_app():
     app.config.from_prefixed_env()
     celery_init_app(app)
 
+    # Register the blueprints for your API routes
+    from app.controllers.login_controller import login_api
+    from app.controllers.main_controller import main_api
+    app.register_blueprint(login_api)
+    app.register_blueprint(main_api)
+
     # Importing database models from models.py
     from app.models.admin import Admin
     from app.models.all_models import Ticket, Train
@@ -67,4 +65,3 @@ def create_app():
         db.create_all()
 
     return app
-

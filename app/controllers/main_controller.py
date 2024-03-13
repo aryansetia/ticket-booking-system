@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 from app import mail
 from flask_mailman import EmailMessage
+from app.tasks import send_reminder_email
 
 main_api = Blueprint('main_api', __name__)
 
@@ -81,7 +82,6 @@ def get_trains():
 
     return jsonify(train_data)
 
-
 @main_api.route('/book-ticket', methods=['POST'])
 def book_ticket():
     data = request.get_json()
@@ -114,16 +114,24 @@ def book_ticket():
     db.session.add(ticket)
     db.session.commit()
     
+    # Send a ticket booked confirmation email
     msg = EmailMessage(
         "Your ticket details",
-        f"Hi, {passenger_name}, your ticket has been booked successfully!",
+        f"Hi {passenger_name}, your ticket has been booked successfully! Your seat number is {seat_number}.",
         "ticket_booking@fastmail.com", 
         [passenger_email]
     )
     msg.send()
 
-    return jsonify({'message': 'Ticket booked successfully'}), 201
+    # Scheduling email reminder task
+    current_time = datetime.now()
+    departure_time = train.departure_time
+    reminder_delta = departure_time - current_time - timedelta(minutes=30)
+    reminder_delay = max(reminder_delta.total_seconds(), 0)
+    print('reminder delay ', reminder_delay, 'current time', current_time, 'departure time', departure_time)
+    send_reminder_email.apply_async(args=[passenger_name, passenger_email, seat_number, departure_time], countdown=reminder_delay)
 
+    return jsonify({'message': 'Ticket booked successfully'}), 201
 
 @main_api.route('/cancel-ticket', methods=['POST'])
 def cancel_ticket():
