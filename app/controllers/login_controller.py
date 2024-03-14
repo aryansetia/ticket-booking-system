@@ -1,6 +1,5 @@
-from flask import Blueprint, request, jsonify, current_app, session, redirect, url_for
+from flask import Blueprint, request, jsonify, session
 from app.models.admin import Admin 
-from app import db 
 
 login_api = Blueprint('login_api', __name__)
 
