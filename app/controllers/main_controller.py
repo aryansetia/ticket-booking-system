@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 from app import mail
 from flask_mailman import EmailMessage
-from app.celery.tasks import send_reminder_email
+from app.tasks import send_reminder_email
 
 main_api = Blueprint('main_api', __name__)
 
@@ -138,8 +138,8 @@ def book_ticket():
 
     # Scheduling email reminder task
     current_time = datetime.now()
-    departure_time = train.departure_time
-    reminder_delta = departure_time - current_time - timedelta(minutes=30)
+    departure_time = train.departure_time # 10pm
+    reminder_delta = departure_time - current_time - timedelta(minutes=30) # 10pm - 8pm = 2hrs - 30 => 1:30 
     reminder_delay = max(reminder_delta.total_seconds(), 0)
     print('reminder delay ', reminder_delay, 'current time', current_time, 'departure time', departure_time)
     send_reminder_email.apply_async(args=[passenger_name, passenger_email, seat_number, departure_time], countdown=reminder_delay)
