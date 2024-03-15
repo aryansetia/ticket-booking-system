@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+load_dotenv()
 
 class Config:
     DEBUG = False
@@ -9,12 +12,12 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite3')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MAIL_SERVER = 'smtp.fastmail.com'
-    MAIL_PORT =  465
-    MAIL_USERNAME = 'ticket_booking@fastmail.com'
-    MAIL_PASSWORD =  '6jhcgxpy8gqzd6zr'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT =  os.environ.get('MAIL_PORT')
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD =  os.environ.get('MAIL_PASSWORD')
     MAIL_USE_TLS = False 
     MAIL_USE_SSL = True 
 
@@ -22,7 +25,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite3')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
     PRESERVE_CONTEXT_ON_EXCEPTION = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
